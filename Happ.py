@@ -373,4 +373,4 @@ with col2:
             "parent_state": "",
         }
         st.session_state["user_input"] = ""
-        st.rerun()
+
