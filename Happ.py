@@ -299,78 +299,82 @@ for msg, sender in st.session_state.messages:
     st.markdown(f'<div class="{bubble}">{msg}</div>', unsafe_allow_html=True)
 
 # ==============================
-# 入力欄（複数行・送信後に確実にクリア）
+# 入力欄（複数行）
+# ※ callback内rerun警告を避けるため、on_clickを使わず通常フローで処理
 # ==============================
 if "user_input" not in st.session_state:
     st.session_state.user_input = ""
 
-def submit():
-    user_text = st.session_state.get("user_input", "").strip()
-    if not user_text:
-        st.warning("何か入力してください。")
-        return
-
-    # まず履歴に追加
-    st.session_state.messages.append((user_text, "user"))
-
-    # profile更新（簡易）
-    update_profile_from_user_text(user_text)
-
-    # 判定用テキスト（履歴も少し混ぜる：インタラクティブに効く）
-    recent_user_texts = " ".join([m[0] for m in st.session_state.messages if m[1] == "user"][-3:])
-    judge_text = (recent_user_texts + " " + user_text).strip()
-
-    scores = score_categories(judge_text)
-    selected_name, _, selected_category = scores[0] if scores else ("（推定不可）", 0, {})
-
-    st.session_state.last_category = selected_name
-
-    # JSON材料抽出
-    materials = extract_support_materials(selected_category)
-
-    with st.spinner("AIエージェントが考えています…"):
-        try:
-            answer = generate_response(
-                st.session_state.messages,
-                selected_name,
-                user_text,
-                materials,
-                st.session_state.profile
-            )
-        except Exception as e:
-            st.error(f"エラー: {e}")
-            return
-
-    # AI回答を履歴へ（出典は付けない）
-    st.session_state.messages.append((answer, "bot"))
-
-    # 入力欄クリア（この方式は Streamlit Cloud でも安定）
-    st.session_state["user_input"] = ""
-    st.rerun()
-
 st.text_area(
-    "ご相談内容を入力してください",
-    height=180,               # ←ここで入力欄を大きく
-    placeholder="例）片付けができない/学校で協調性がない/家で落ち着きがなくて困っている…など",
+    "ご相談内容を入力してください（改行OK）",
+    height=180,
+    placeholder="例）園で切り替えが苦手で泣いてしまう／家で落ち着きがなくて困っている…など",
     key="user_input"
 )
 
 col1, col2 = st.columns([3, 1])
-with col1:
-    st.button("送信 🌱", on_click=submit, use_container_width=True)
-with col2:
-    if st.button("リセット", use_container_width=True):
-        st.session_state.messages = []
-        st.session_state.last_category = None
-        st.session_state.profile = {
-            "age_or_grade": "",
-            "setting": "",
-            "main_concern": "",
-            "frequency_severity": "",
-            "triggers": "",
-            "what_tried": "",
-            "strengths": "",
-            "parent_state": "",
-        }
-        st.session_state["user_input"] = ""
-        st.rerun()
+
+send_clicked = col1.button("送信 🌱", use_container_width=True)
+reset_clicked = col2.button("リセット", use_container_width=True)
+
+if reset_clicked:
+    st.session_state.messages = []
+    st.session_state.last_category = None
+    st.session_state.profile = {
+        "age_or_grade": "",
+        "setting": "",
+        "main_concern": "",
+        "frequency_severity": "",
+        "triggers": "",
+        "what_tried": "",
+        "strengths": "",
+        "parent_state": "",
+    }
+    st.session_state["user_input"] = ""
+    st.rerun()  # ←通常フローなのでOK（警告出ません）
+
+if send_clicked:
+    user_text = st.session_state.get("user_input", "").strip()
+    if not user_text:
+        st.warning("何か入力してください。")
+    else:
+        # まず履歴に追加
+        st.session_state.messages.append((user_text, "user"))
+
+        # profile更新（簡易）
+        update_profile_from_user_text(user_text)
+
+        # 判定用テキスト（履歴も少し混ぜる：インタラクティブに効く）
+        recent_user_texts = " ".join([m[0] for m in st.session_state.messages if m[1] == "user"][-3:])
+        judge_text = (recent_user_texts + " " + user_text).strip()
+
+        scores = score_categories(judge_text)
+        selected_name, _, selected_category = scores[0] if scores else ("（推定不可）", 0, {})
+
+        st.session_state.last_category = selected_name
+
+        # JSON材料抽出
+        materials = extract_support_materials(selected_category)
+
+        with st.spinner("AIエージェントが考えています…"):
+            try:
+                answer = generate_response(
+                    st.session_state.messages,
+                    selected_name,
+                    user_text,
+                    materials,
+                    st.session_state.profile
+                )
+            except Exception as e:
+                st.error(f"エラー: {e}")
+                answer = None
+
+        if answer:
+            # AI回答を履歴へ
+            st.session_state.messages.append((answer, "bot"))
+
+            # 入力欄クリア
+            st.session_state["user_input"] = ""
+
+            # 反映のため再描画
+            st.rerun()
