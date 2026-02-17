@@ -21,7 +21,6 @@ if not st.session_state.authenticated:
     if st.button("ログイン"):
         if pwd == PASSWORD:
             st.session_state.authenticated = True
-            st.rerun()
         else:
             st.error("パスワードが違います。")
     st.stop()
@@ -346,7 +345,6 @@ def submit():
 
     # 入力欄クリア（この方式は Streamlit Cloud でも安定）
     st.session_state["user_input"] = ""
-    st.rerun()
 
 st.text_area(
     "ご相談内容を入力してください",
@@ -373,4 +371,5 @@ with col2:
             "parent_state": "",
         }
         st.session_state["user_input"] = ""
+
 
