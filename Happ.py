@@ -10,7 +10,7 @@ st.set_page_config(page_title="発達支援相談AIエージェント", layout="
 # ==============================
 # パスワード認証
 # ==============================
-PASSWORD = "forest2025"
+PASSWORD = "PW2026"
 
 if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
@@ -349,9 +349,9 @@ def submit():
     st.rerun()
 
 st.text_area(
-    "ご相談内容を入力してください（改行OK）",
+    "ご相談内容を入力してください",
     height=180,               # ←ここで入力欄を大きく
-    placeholder="例）園で切り替えが苦手で泣いてしまう／家で落ち着きがなくて困っている…など",
+    placeholder="例）片付けができない/学校で協調性がない/家で落ち着きがなくて困っている…など",
     key="user_input"
 )
 
