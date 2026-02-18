@@ -10,7 +10,7 @@ st.set_page_config(page_title="発達支援相談AIエージェント", layout="
 # ==============================
 # パスワード認証
 # ==============================
-PASSWORD = "PW2026"
+PASSWORD = "forest2025"
 
 if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
@@ -371,5 +371,4 @@ with col2:
             "parent_state": "",
         }
         st.session_state["user_input"] = ""
-
 
